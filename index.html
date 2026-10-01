@@ -355,18 +355,14 @@
         <div class="section-title">2. Parâmetros de Processo e Negócio (Valores Padrão Sugeridos)</div>
         <div class="grid">
             <div class="form-group">
-                <label for="meta_salario">Remuneração Desejada (R$/mês):</label>
-                <input type="number" id="meta_salario" step="0.01" value="4000.00" required>
-            </div>
-            <div class="form-group">
-                <label for="horas_produtivas">Horas Produtivas por Mês:</label>
-                <input type="number" id="horas_produtivas" step="1" value="100" required>
-                <span class="helper-text">Apenas tempo efetivo de pintura/criação.</span>
-            </div>
-            <div class="form-group">
                 <label for="tempo_peca">Tempo Gasto na Peça (Minutos):</label>
                 <input type="number" id="tempo_peca" step="1" value="90" required>
-                <span class="helper-text">Ex: 90 min = 1h30 de trabalho.</span>
+                <span class="helper-text">Ex: 90 min = 1h30 de trabalho. Use este campo para registrar o tempo de produção.</span>
+            </div>
+            <div class="form-group">
+                <label for="custo_mao_obra">Custo da Mão de Obra por Hora (R$) — Opcional:</label>
+                <input type="number" id="custo_mao_obra" step="0.01" min="0" value="150" placeholder="Opcional — Ex: 150,00">
+                <span class="helper-text">Valor sugerido: R$ 150,00 por hora. O sistema calcula automaticamente o custo proporcional ao tempo informado. Deixe em branco para não incluir mão de obra no cálculo.</span>
             </div>
             <div class="form-group">
                 <label for="custo_forno">Custo Fixo/Queima do Forno por Peça (R$):</label>
@@ -395,16 +391,12 @@
     <div class="results-card" id="resultadoCard" style="display: none;">
         <h2>Resultado da Precificação</h2>
         <div class="result-row">
-            <span>Valor da Hora de Trabalho:</span>
-            <span id="resHora">R$ 0,00</span>
-        </div>
-        <div class="result-row">
-            <span>Mão de Obra Dedicada à Peça:</span>
-            <span id="res MaoObra">R$ 0,00</span>
-        </div>
-        <div class="result-row">
-            <span>Custo Direto de Produção (Materiais + Forno):</span>
+            <span>Custo Direto de Produção (Materiais + Forno + Mão de Obra):</span>
             <span id="resDireto">R$ 0,00</span>
+        </div>
+        <div class="result-row">
+            <span>Custo de Mão de Obra (proporcional ao tempo):</span>
+            <span id="resMaoObra">R$ 0,00</span>
         </div>
         <div class="result-row">
             <span>Reserva de Perdas:</span>
@@ -437,24 +429,21 @@ function calcularPreco(event) {
     let custoFrete = parseFloat(document.getElementById('custo_frete').value) || 0;
 
     // Capturar parâmetros de processo
-    let metaSalario = parseFloat(document.getElementById('meta_salario').value) || 0;
-    let horasProdutivas = parseFloat(document.getElementById('horas_produtivas').value) || 1;
     let tempoPecaMin = parseFloat(document.getElementById('tempo_peca').value) || 0;
+    let custoMaoObraHora = parseFloat(document.getElementById('custo_mao_obra').value) || 0;
+    let custoMaoObra = custoMaoObraHora * (tempoPecaMin / 60);
     let custoForno = parseFloat(document.getElementById('custo_forno').value) || 0;
     let taxaPerdas = parseFloat(document.getElementById('taxa_perdas').value) || 0;
     let taxasVenda = parseFloat(document.getElementById('taxas_venda').value) || 0;
     let margemLucro = parseFloat(document.getElementById('margem_lucro').value) || 0;
 
-    // 1. Cálculo da Hora de Trabalho
-    let valorHora = metaSalario / horasProdutivas;
-    let horasPeca = tempoPecaMin / 60;
-    let maoDeObra = valorHora * horasPeca;
-
-    // 2. Soma de Custos Diretos
+    // 1. Soma de Custos Diretos
+    // O custo de mão de obra é opcional e informado como valor por hora.
+    // O sistema calcula o custo proporcional ao tempo gasto na peça.
     let somaMateriais = custoPeca + custoTinta + custoHigienizacao + custoEmbalagem + custoFrete + custoForno;
-    let custoParcial = somaMateriais + maoDeObra;
+    let custoParcial = somaMateriais + custoMaoObra;
 
-    // 3. Incidência de Perdas
+    // 2. Incidência de Perdas
     let valorPerdas = custoParcial * (taxaPerdas / 100);
     let custoTotalReal = custoParcial + valorPerdas;
 
@@ -471,9 +460,8 @@ function calcularPreco(event) {
     let lucroLiquido = precoFinal * (margemLucro / 100);
 
     // Exibir resultados na tela
-    document.getElementById('resHora').innerText = `R$ ${valorHora.toFixed(2)}`;
-    document.getElementById('res MaoObra').innerText = `R$ ${maoDeObra.toFixed(2)}`;
-    document.getElementById('resDireto').innerText = `R$ ${somaMateriais.toFixed(2)}`;
+    document.getElementById('resDireto').innerText = `R$ ${custoParcial.toFixed(2)}`;
+    document.getElementById('resMaoObra').innerText = `R$ ${custoMaoObra.toFixed(2)}`;
     document.getElementById('resPerdas').innerText = `R$ ${valorPerdas.toFixed(2)}`;
     document.getElementById('resCustoTotal').innerText = `R$ ${custoTotalReal.toFixed(2)}`;
     document.getElementById('resPrecoFinal').innerText = `R$ ${precoFinal.toFixed(2)}`;
