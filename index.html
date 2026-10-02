@@ -430,7 +430,7 @@
 <script>
 function calcularPreco(event) {
     if(event) event.preventDefault();
-
+    
     // Capturar entradas obrigatórias
     let custoPeca = parseFloat(document.getElementById('custo_peca').value) || 0;
     let custoTinta = parseFloat(document.getElementById('custo_tinta').value) || 0;
@@ -469,6 +469,12 @@ function calcularPreco(event) {
     let precoFinal = custoTotalReal / (1 - percentualDescontos);
     let lucroLiquido = precoFinal * (margemLucro / 100);
 
+     // Evento para o Google Analytics
+    gtag('event', 'calcular_preco', {
+        value: precoFinal,
+        currency: 'BRL'
+    });
+    
     // Exibir resultados na tela
     document.getElementById('resDireto').innerText = `R$ ${custoParcial.toFixed(2)}`;
     document.getElementById('resMaoObra').innerText = `R$ ${custoMaoObra.toFixed(2)}`;
